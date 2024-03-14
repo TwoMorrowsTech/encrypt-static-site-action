@@ -5,16 +5,32 @@ inputs:
     description: 'The output folder of a static site build.'
     required: true
     default: './_site'
+  output-path:
+    description: 'The output folder of encryption step. Defaults to inplace encryption.'
+    required: true
+    default: './_site'
   salt:
     description: 'Encryption salt.'
     required: true
   password:
     description: 'Site password.'
     required: true
-  remember:
+  remember-days:
     description: "Number of days to remeber password on login if user checks 'Remember Me'"
     required: true
     deafult: false
+  share:
+    description: "Set to true or url se when generating a sharable link to auto login."
+    required: false
+    deafult: false
+  share-remember:
+    description: "Set to true remember hashed pw."
+    required: false
+    deafult: false
+outputs:
+  sharing-hash:
+    description: "The shareable auto decrypt link or hash if no url is passed."
+    value: ${{ steps.generate-sharing-hash.outputs.sharing-hash }}
 runs:
   using: "composite"
   steps:
@@ -23,9 +39,18 @@ runs:
       shell: bash
     - name: Encrypt Site
       run:  |
-          staticrypt ${{ inputs.path }}/* -r -d ${{ inputs.path }} \
+          staticrypt ${{ inputs.path }}/* -r -d ${{ inputs.output-path }} \
             --salt ${{ inputs.salt }} \
             --password ${{ inputs.password }} \
-            --remember ${{ inputs.remember }} \
+            --remember ${{ inputs.remember-days }} \
             --short
+      shell: bash
+    - name: Generate Sharing Hash
+      id: generate-sharing-hash
+      if: ${{ inputs.share }}
+      run: | 
+          staticrypt  --salt ${{ inputs.salt }} --password ${{ inputs.password }} \
+            --share ${{ inputs.share }} \
+            $( if [[ ${{ inputs.share-remember }} -eq 'true' ]]; then echo "--share-remember"; fi )
+            >> $GITHUB_OUTPUT
       shell: bash
