@@ -11,6 +11,10 @@ inputs:
   password:
     description: 'Site password.'
     required: true
+  remember:
+    description: "Number of days to remeber password on login if user checks 'Remember Me'"
+    required: true
+    deafult: false
 runs:
   using: "composite"
   steps:
@@ -21,6 +25,7 @@ runs:
       run:  |
           staticrypt ${{ inputs.path }}/* -r -d ${{ inputs.path }} \
             --salt ${{ inputs.salt }} \
-            -p ${{ inputs.password }} \
+            --password ${{ inputs.password }} \
+            --remember ${{ inputs.remember }} \
             --short
       shell: bash
